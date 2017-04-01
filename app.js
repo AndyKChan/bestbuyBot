@@ -41,10 +41,23 @@ dialog.matches('product-search', (session, result) => {
                 var msg = new builder.Message(session).text("Here are a few things you might like...");
                 products.map(p => msg.addAttachment(createHeroCard(session, p)));
                 session.send(msg);
+                session.send("Would you like to learn more about a product? If so, please enter the web code printed in the picture.");
             });
     } else {
         session.send('no product');
     }
+})
+.matches('analyze-sku', (session, result) => {
+	var product = result.entities[0].entity;
+	 superagent
+            .get('https://msi.bbycastatic.ca/mobile-si/si/pdp/reviewDetails/' + product)
+            .end((err, res) => {
+            	if (err) {
+            		return console.err(err);
+            	}
+                var text = "";
+             	res.body.si.response.results.forEach((result) => text += " " + result.reviewText);
+            });
 })
 .matches('hello', (session, result) => {
     session.send('hello!');
@@ -74,9 +87,11 @@ function createHeroCard(session, product) {
     var image = product.summary.media.primaryImage.url;
     var description = product.summary.descriptions.short || product.summary.descriptions.long;
     var productUrl = "http://www.bestbuy.ca" + product.summary.url;
+    var sku = product.skuId;
     return new builder.HeroCard(session)
         .title(title)
         .subtitle('$' + price)
+        .subtitle('Web Code: ' + sku)
         //.text(description)
         .images([
             builder.CardImage.create(session, image)
@@ -84,4 +99,4 @@ function createHeroCard(session, product) {
         .buttons([
             builder.CardAction.openUrl(session, productUrl, 'View')
         ]);
-}
+};

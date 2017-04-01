@@ -27,14 +27,75 @@ i want to compare the msgs in the reviews, and save which ever keywords generate
 i need to send in the reviews as my own msgs and compare them to luis.
 
 
-dialog.onDefault([
+dialog.matches('analyze-keywords', (session, result) => {
+	if(result.entities && result.entities[0]) {
+		var product = result.entities[0].entity;
+		superagent
+            .get('https://msi.bbycastatic.ca/mobile-si/si/v3/products/search')
+            .query({query: product})
+            .end((err, res) => {
+                var products = res.body.searchApi.documents.slice(0, 3);
+                var msg = new builder.Message(session).text("Here are a few things you might like...");
+                products.map(p => msg.addAttachment(createHeroCard(session, p)));
+                session.send(msg);
+            });
+		var haveProduct = use bestbuy api to grab productId
+		if(haveProduct){
+			var reviews = use bestbuy api to grab product reviews
+			var i;
+			for(i = 0; i < reviews.length; i++){
+				iterate through all the reviews and send each review to text analysis API and return top keywords
+				var keywordsOfReview = reviews[0]...
 
-    function (session) {
-        builder.Prompts.text(session, 'Hi! How may I help you today?');
-    },
-	
-    function (session, results) {
-        session.userData.name = results.response;
-        session.endDialog();
-    }
-]);
+			}	
+		} else {
+			session.send('This product does not exist in our database!');
+		}
+	} else {
+		session.send('Please specify a product');
+	}
+
+});
+
+
+
+// pre
+
+
+dialog.matches('analyze-keywords', (session, result) => {
+	if(result.entities && result.entities[0]) {
+		var product = result.entities[0].entity;
+		superagent
+            .get('https://msi.bbycastatic.ca/mobile-si/si/v3/products/search')
+            .query({query: product})
+            .end((err, res) => {
+                var products = res.body.searchApi.documents.slice(0, 3);
+                var msg = new builder.Message(session).text("Here are a few things you might like...");
+                products.map(p => msg.addAttachment(createHeroCard(session, p)));
+                session.send(msg);
+                session.userData.product = products[0];
+            });
+            var sku;
+
+
+			var reviews = use bestbuy api to grab product reviews
+			superagent
+            .get('https://msi.bbycastatic.ca/mobile-si/si/v4/pdp/overview/{productID}')
+            .query({query: product})
+            .end((err, res) => {
+                var products = res.body.searchApi.documents.slice(0, 3);
+                var msg = new builder.Message(session).text("Here are a few things you might like...");
+                products.map(p => msg.addAttachment(createHeroCard(session, p)));
+                session.send(msg);
+            });
+
+			var i;
+			for(i = 0; i < reviews.length; i++){
+				iterate through all the reviews and send each review to text analysis API and return top keywords
+				var keywordsOfReview = reviews[0]...
+
+	} else {
+		session.send('Please specify a product');
+	}
+	}
+});
