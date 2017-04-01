@@ -1,0 +1,23 @@
+{
+  "name": "bestbuybot",
+  "version": "1.0.0",
+  "description": "a bot that works for best buy for customers",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/AndyKChan/bestbuyBot.git"
+  },
+  "author": "Andy Chan",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/AndyKChan/bestbuyBot/issues"
+  },
+  "homepage": "https://github.com/AndyKChan/bestbuyBot#readme",
+  "dependencies": {
+    "botbuilder": "^3.7.0",
+    "restify": "^4.3.0"
+  }
+}
