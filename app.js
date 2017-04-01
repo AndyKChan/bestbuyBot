@@ -49,15 +49,38 @@ dialog.matches('product-search', (session, result) => {
 })
 .matches('analyze-sku', (session, result) => {
 	var product = result.entities[0].entity;
+	var text = "";
 	 superagent
             .get('https://msi.bbycastatic.ca/mobile-si/si/pdp/reviewDetails/' + product)
             .end((err, res) => {
             	if (err) {
             		return console.err(err);
             	}
-                var text = "";
              	res.body.si.response.results.forEach((result) => text += " " + result.reviewText);
+
+			     superagent
+			            .post('https://westus.api.cognitive.microsoft.com/text/analytics/v2.0/keyPhrases')
+			            .send({
+						  "documents": [
+						    {
+						      "language": "en",
+						      "id": "string",
+						      "text": text.slice(0,1000)
+						    }
+						  ]
+						})
+			            .set('Ocp-Apim-Subscription-Key', '9dc65f3a3e3c4b17aaee324b81b88f9e')
+			            .set('Content-Type', 'application/json')
+			            .end((err, res) => {
+			            	if (err) {
+			            		return console.log(err);
+			            	}
+			            	session.send(res.body.documents[0].keyPhrases.slice(0,5).join(', '));
+			            });
             });
+
+
+           
 })
 .matches('hello', (session, result) => {
     session.send('hello!');
