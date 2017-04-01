@@ -78,26 +78,6 @@ bot.dialog('/profile', [
     }
 ]);
 
-bot.dialog('/moreInfo', [
-	
-    request
-		   .post('https://api.cognitive.microsoft.com/api/v5/#WebPages.0')
-		   .send({"url":session.userData.food})
-		   .set('Content-Type', 'application/json')
-		   .set('Ocp-Apim-Subscription-Key', '450efdb5185b46eca7f09bf89646731c')
-		   .end(
-		   	function (err, res){
-		
-				if (err || !res.ok) {
-					session.send('oops')
-				} else {
-					session.send(res.body.webPages[0].value[0].url)
-				}
-
-				session.endDialog();
-			})
-]);
-
 dialog.matches('Upload_Pic', [
 
 	function (session) {
