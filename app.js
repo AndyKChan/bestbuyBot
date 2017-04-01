@@ -1,6 +1,6 @@
 var restify = require('restify');
 var builder = require('botbuilder');
-var request = require('superagent');
+var superagent = require('superagent');
 
 //=========================================================
 // Bot Setup
@@ -26,67 +26,62 @@ server.post('/api/messages', connector.listen());
 //=========================================================
 
 // Create LUIS recognizer that points at our model and add it as the root '/' dialog for our Cortana Bot.
-var model = 'https://westus.api.cognitive.microsoft.com/luis/v2.0/apps/603163cb-a45c-4308-a518-6d48d0b65618?subscription-key=ea2c31d50ef04c339bf5637ed3dcc758&timezoneOffset=0.0&verbose=true&q=';
+var model = 'https://westus.api.cognitive.microsoft.com/luis/v2.0/apps/6179af9a-c7b6-4c18-bddc-0af0c9a59b9d?subscription-key=ea2c31d50ef04c339bf5637ed3dcc758&timezoneOffset=0.0&verbose=true&q=';
 var recognizer = new builder.LuisRecognizer(model);
 var dialog = new builder.IntentDialog({ recognizers: [recognizer] });
 
+dialog.matches('product-search', (session, result) => {
+    if (result.entities && result.entities[0]) {
+        var product = result.entities[0].entity;
+        superagent
+            .get('https://msi.bbycastatic.ca/mobile-si/si/v3/products/search')
+            .query({query: product})
+            .end((err, res) => {
+                var products = res.body.searchApi.documents.slice(0, 3);
+                var msg = new builder.Message(session).text("Here are a few things you might like...");
+                products.map(p => msg.addAttachment(createHeroCard(session, p)));
+                session.send(msg);
+            });
+    } else {
+        session.send('no product');
+    }
+})
+.matches('hello', (session, result) => {
+    session.send('hello!');
+})
+.onDefault((session) => {
+    superagent
+        .post('https://westus.api.cognitive.microsoft.com/qnamaker/v1.0/' + 
+            '/knowledgebases/434f8163-42cf-4ff4-97f5-df2f8cc97fd1/generateAnswer')
+        .send({"question": session.message.text})
+        .set('Ocp-Apim-Subscription-Key', '22fa7c593b0740dbb81eac9bd0cfafb1')
+        .set('Content-Type', 'application/json')
+        .end((err, res) => {
+            if (err) {
+                session.send('err' + res.text);
+            } else {
+                session.send(res.body.answer);
+            }
+        });
+});
+
 bot.dialog('/', dialog);
 
-dialog.onDefault([
 
-    function () {
-        builder.Prompts.text('Hi! What would you like to filter today?');
-    }
-]);
-
-
-dialog.matches('Upload_Pic', [
-
-	function (session) {
-		builder.Prompts.attachment(session, "Upload a picture of food for me to analyze!");
-	},
-	
-	function (session, results) {
-		var moreInfo = false;
-		var result = ''
-		console.log(results.response[0].contentUrl);
-		session.userData.foodPic = results.response;
-		
-		if(results.response[0].contentUrl.match(/localhost/i)){
-			result = 'https://g.foolcdn.com/editorial/images/225916/getty-apple_large.jpg'
-		} else {
-			result = results.response[0].contentUrl;
-		}
-		
-		request
-		   .post('https://westus.api.cognitive.microsoft.com/vision/v1.0/analyze?visualFeatures=Categories,Tags&language=en')
-		   .send({"url":result})
-		   .set('Content-Type', 'application/json')
-		   .set('Ocp-Apim-Subscription-Key', '450efdb5185b46eca7f09bf89646731c')
-		   .end(
-		   	function (err, res){
-		
-				if (err || !res.ok) {
-					session.send('oops')
-				} else {
-					console.log(res)
-					var food = res.body.tags.filter(function(t){return t.hint == 'food'});
-					session.userData.food = food;
-					session.beginDialog('/moreInfo');
-					console.log(food);
-					
-					//food[0].name is the food
-					if(food.length){
-						getNutrition(food[0].name).then(facts => session.send(facts));
-					} else { 
-					session.send('no food was found!')
-					}
-					
-					console.log('success');
-				}
-
-				session.endDialog();
-			});
-				
-		}
-]);
+function createHeroCard(session, product) {
+    var price = product.priceBlock.itemPrice.currentPrice;
+    var title = product.summary.names.short;
+    var image = product.summary.media.primaryImage.url;
+    var description = product.summary.descriptions.short || product.summary.descriptions.long;
+    var productUrl = "http://www.bestbuy.ca" + product.summary.url;
+    return new builder.HeroCard(session)
+        .title(title)
+        .subtitle('$' + price)
+        //.text(description)
+        .images([
+            builder.CardImage.create(session, image)
+        ])
+        .buttons([
+            builder.CardAction.openUrl(session, productUrl, 'View')
+        ]);
+}
