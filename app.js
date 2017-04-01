@@ -34,8 +34,8 @@ bot.dialog('/', dialog);
 
 dialog.onDefault([
 
-    function (session) {
-        builder.Prompts.text(session, 'Hi! What would you like to filter today?');
+    function () {
+        builder.Prompts.text('Hi! What would you like to filter today?');
     }
 ]);
 
