@@ -82,6 +82,15 @@ dialog.matches('product-search', (session, result) => {
 
            
 })
+.matches(/^upload/i, [
+	function (session) {
+		builder.Prompts.attachment(session, "Upload a picture of your product");
+	},
+	
+	function (session, results) {
+		session.send("Top User Review Keywords: Great computer, fantastic keyboard, lightweight");	
+	}
+])
 .matches('hello', (session, result) => {
     session.send('hello!');
 })
