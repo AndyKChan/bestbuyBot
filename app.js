@@ -75,7 +75,7 @@ dialog.matches('product-search', (session, result) => {
 			            	if (err) {
 			            		return console.log(err);
 			            	}
-			            	session.send(res.body.documents[0].keyPhrases.slice(0,5).join(', '));
+			            	session.send("Top User Review Keywords: " + res.body.documents[0].keyPhrases.slice(0,5).join(', '));
 			            });
             });
 
