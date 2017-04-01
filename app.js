@@ -1,7 +1,6 @@
 var restify = require('restify');
 var builder = require('botbuilder');
 var request = require('superagent');
-var getNutrition = require('./nutrition.js');
 
 //=========================================================
 // Bot Setup
@@ -33,50 +32,13 @@ var dialog = new builder.IntentDialog({ recognizers: [recognizer] });
 
 bot.dialog('/', dialog);
 
-dialog.matches('Change_Name', [
-
-    function (session, results) {
-		if(results.entities && results.entities.length && results.entities[0]){
-			var userName =  results.entities[0].entity;
-			session.userData.name = userName;
-			session.send('Hello %s!', userName)
-		}
-		else {
-			session.beginDialog('/profile');
-		}
-    },
-	
-    function (session, results) {
-        session.send('Ok... Changed your name to %s', session.userData.name);
-    }
-]);
-
 dialog.onDefault([
 
-    function (session, args, next) {
-        if (!session.userData.name) {
-            session.beginDialog('/profile');
-        } else {
-            next();
-        }
-    },
-	
-    function (session, results) {
-        session.send('Hello %s!', session.userData.name);
-    }
-]);
-
-bot.dialog('/profile', [
-
     function (session) {
-        builder.Prompts.text(session, 'Hi! What is your name?');
-    },
-	
-    function (session, results) {
-        session.userData.name = results.response;
-        session.endDialog();
+        builder.Prompts.text(session, 'Hi! What would you like to filter today?');
     }
 ]);
+
 
 dialog.matches('Upload_Pic', [
 
