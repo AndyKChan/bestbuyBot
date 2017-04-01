@@ -78,9 +78,6 @@ dialog.matches('product-search', (session, result) => {
 			            	session.send("Top User Review Keywords: " + res.body.documents[0].keyPhrases.slice(0,5).join(', '));
 			            });
             });
-
-
-           
 })
 .matches(/^upload/i, [
 	function (session) {
