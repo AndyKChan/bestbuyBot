@@ -41,7 +41,6 @@ dialog.matches('product-search', (session, result) => {
                 var msg = new builder.Message(session).text("Here are a few things you might like...");
                 products.map(p => msg.addAttachment(createHeroCard(session, p)));
                 session.send(msg);
-                session.send("Would you like to learn more about a product? If so, please enter the web code printed in the picture.");
             });
     } else {
         session.send('no product');
