@@ -47,7 +47,7 @@ dialog.matches('product-search', (session, result) => {
         session.send('no product');
     }
 })
-.matches('analyze-sku', (session, result) => {
+.matches('analyze-sku', [(session, result) => {
 	var product = result.entities[0].entity;
 	var text = "";
 	 superagent
@@ -65,7 +65,7 @@ dialog.matches('product-search', (session, result) => {
 						    {
 						      "language": "en",
 						      "id": "string",
-						      "text": text.slice(0,1000)
+						      "text": text.slice(0,5000)
 						    }
 						  ]
 						})
@@ -75,10 +75,33 @@ dialog.matches('product-search', (session, result) => {
 			            	if (err) {
 			            		return console.log(err);
 			            	}
-			            	session.send("Top User Review Keywords: " + res.body.documents[0].keyPhrases.slice(0,5).join(', '));
+			            	session.userData.productId = product; 
+
+			            	builder.Prompts.choice(session, "Top User Review Keywords: ", res.body.documents[0].keyPhrases.slice(0,5));	
+			            	session.send("Type in the number you want to expand the comment on");		            	
 			            });
             });
-})
+},  function (session, results) {
+        console.log(results);
+        if (results.response) {
+            //session.send(results.response.entity + " " + session.userData.productId); 
+            	 superagent
+            .get('https://msi.bbycastatic.ca/mobile-si/si/pdp/reviewDetails/' + session.userData.productId)
+            .end((err, res) => {
+            	if (err) {
+            		return console.err(err);
+            	}
+             	var relatedReviews = res.body.si.response.results.filter((review) => review.reviewText.toLowerCase().indexOf(results.response.entity.toLowerCase()) >= 0);
+           		//implciilty returning with just an arrow with no braces
+           		console.log(relatedReviews);
+           		var msg = new builder.Message(session).text("");
+           		relatedReviews.forEach(review => msg.addAttachment(createReviewCard(session, review, results.response.entity.toLowerCase())));
+           		session.send(msg);
+            });
+        } else {
+            session.send("ok");
+        }
+}])
 .matches(/^upload/i, [
 	function (session) {
 		builder.Prompts.attachment(session, "Upload a picture of your product");
@@ -109,6 +132,20 @@ dialog.matches('product-search', (session, result) => {
 
 bot.dialog('/', dialog);
 
+// [ { title: 'price',
+//     userNickname: 'JAYJAY',
+//     submissionTime: '2016-12-18T20:18:24',
+//     rating: 4,
+//     reviewText: 'why price of the open box item is more expensive than the brand
+//  new one???Please advise' } ]
+
+function createReviewCard(session, review, keywords) {
+    var rating = review.rating;
+    var description = review.reviewText;
+    return new builder.HeroCard(session)
+        .title("Rating: " + rating + '/5')
+        .text(description.replace(new RegExp(keywords,'i'), '<b>' + keywords + '</b>'));
+};
 
 function createHeroCard(session, product) {
     var price = product.priceBlock.itemPrice.currentPrice;
@@ -121,11 +158,12 @@ function createHeroCard(session, product) {
         .title(title)
         .subtitle('$' + price)
         .subtitle('Web Code: ' + sku)
-        //.text(description)
         .images([
             builder.CardImage.create(session, image)
         ])
         .buttons([
-            builder.CardAction.openUrl(session, productUrl, 'View')
+            builder.CardAction.openUrl(session, productUrl, 'Product Page'),
+            builder.CardAction.postBack(session, sku, 'Popular Reviews')
+
         ]);
 };
