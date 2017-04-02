@@ -78,7 +78,7 @@ dialog.matches('product-search', (session, result) => {
 			            	session.userData.productId = product; 
 
 			            	builder.Prompts.choice(session, "Top User Review Keywords: ", res.body.documents[0].keyPhrases.slice(0,5));	
-			            	session.send("Type in the number you want to expand the comment on");		            	
+			            	session.send("Pick a comment.");		            	
 			            });
             });
 },  function (session, results) {
@@ -144,7 +144,7 @@ function createReviewCard(session, review, keywords) {
     var description = review.reviewText;
     return new builder.HeroCard(session)
         .title("Rating: " + rating + '/5')
-        .text(description.replace(new RegExp(keywords,'i'), '<b>' + keywords + '</b>'));
+        .text(description.replace(new RegExp(keywords,'i'), keywords));
 };
 
 function createHeroCard(session, product) {
